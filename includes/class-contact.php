@@ -21,6 +21,8 @@ class Contact_API_Handler {
 		] );
 	}
 
+	// /wp-erp-api/contact/:id for 1 contact
+	// /wp-erp-api/contact for all contacts
 	function get_contact( $request ) {
 		$user = check_authentication();
 
