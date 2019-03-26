@@ -17,7 +17,12 @@ class Contact_API_Handler {
 	public function api_route_register() {
 		register_rest_route( 'wp-erp-api', 'contact(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
-        	'callback' 	=> [ $this, 'get_contact' ]
+			'callback' 	=> [ $this, 'get_contact' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'contact/(?P<id>\d+)', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'post_contact' ]
 		] );
 	}
 
@@ -35,5 +40,23 @@ class Contact_API_Handler {
 			wp_send_json_success( $contact->data );
 
 		wp_send_json_success( [] );
+	}
+
+	// /wp-erp-api/contact/:id for updating 1 contact
+	// keys : photo_id,first_name,last_name,email,phone,life_stage,contact_owner,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,type,
+	function post_contact( $request ) {
+		$user = check_authentication();
+
+		$contact = $_POST;
+
+		$contact['id'] = $request['id'];
+
+		$people_id = erp_insert_people( $contact );
+
+		if ( is_wp_error( $people_id ) ) {
+			wp_send_json_error( 'Non contact with the id = ' . $request['id'] );
+		}
+
+		wp_send_json_success( 'Updated successfully.' );
 	}
 }
