@@ -48,12 +48,13 @@ class Contact_API_Handler {
 	}
 
 	// /wp-erp-api/contact/:id for updating 1 contact
-	// keys : photo_id,first_name,last_name,email,phone,life_stage,contact_owner,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
+	// keys : photo_id,first_name,last_name,email,phone,life_stage,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
 	function post_contact( $request ) {
 		$user = check_authentication();
 
 		$contact = $_POST;
 
+		$contact['contact_owner'] = $user->ID;
 		$contact['id'] = $request['id'];
 		$contact['type'] = 'contact';
 
@@ -67,13 +68,14 @@ class Contact_API_Handler {
 	}
 
 	// add contacts by posted data.
-	// array of these keys : photo_id,first_name,last_name,email,phone,life_stage,contact_owner,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
+	// array of these keys : photo_id,first_name,last_name,email,phone,life_stage,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
 	function add_contacts( $request ) {
 		$user = check_authentication();
 
 		$contacts = json_decode( $request->get_body(), true );
 
 		foreach ( $contacts as $contact ) {
+			$contact['contact_owner'] = $user->ID;
 			$contact['type'] = 'contact';
 			$people_id = erp_insert_people( $contact );
 
