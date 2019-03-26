@@ -14,15 +14,16 @@ class Contact_API_Handler {
 		add_action( 'rest_api_init', [$this, 'api_route_register'] );
 	}
 
-	private function api_route_register() {
+	public function api_route_register() {
 		register_rest_route( 'wp-erp-api', 'contact(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
-        	'callback' 	=> 'get_contact',
+        	'callback' 	=> [ $this, 'get_contact' ],
         	'args'		=> [ 'id' ]
 		] );
 	}
 
-	private function get_contact( $id = null) {
-		check_authentication();
+	function get_contact( $id = null) {
+		$user = check_authentication();
+
 	}
 }
