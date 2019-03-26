@@ -31,6 +31,8 @@ function check_authentication() {
     if ( is_wp_error( $user ) )
     	wp_send_json_error( 'Authorization is invalid' );
 
+    wp_set_current_user( $user->ID );
+
 	return $user;
 }
 

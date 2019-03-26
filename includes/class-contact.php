@@ -17,13 +17,21 @@ class Contact_API_Handler {
 	public function api_route_register() {
 		register_rest_route( 'wp-erp-api', 'contact(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
-        	'callback' 	=> [ $this, 'get_contact' ],
-        	'args'		=> [ 'id' ]
+        	'callback' 	=> [ $this, 'get_contact' ]
 		] );
 	}
 
-	function get_contact( $id = null) {
+	function get_contact( $request ) {
 		$user = check_authentication();
 
+		if ( empty( $request['id'] ) )
+			wp_send_json_success( erp_get_peoples( $_GET ) );
+
+		$contact = new WeDevs\ERP\CRM\Contact( $request['id'] );
+		
+		if ( $contact )
+			wp_send_json_success( $contact->data );
+
+		wp_send_json_success( [] );
 	}
 }
