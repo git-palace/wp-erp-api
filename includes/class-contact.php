@@ -36,13 +36,21 @@ class Contact_API_Handler {
 	function get_contact( $request ) {
 		$user = check_authentication();
 
-		if ( empty( $request['id'] ) )
-			wp_send_json_success( erp_get_peoples( $_GET ) );
+		if ( empty( $request['id'] ) ) {
+		    $args = $_GET;
+		    $args['type'] = 'contact';
+
+			wp_send_json_success( erp_get_peoples( $args ) );
+		}
 
 		$contact = new WeDevs\ERP\CRM\Contact( $request['id'] );
-		
-		if ( $contact )
-			wp_send_json_success( $contact->data );
+
+		if ( $contact && in_array( 'contact', $contact->data->types ) ) {
+			if ( $contact->data->contact_owner == $user->ID )
+				wp_send_json_success( $contact->data );
+			else
+				wp_send_json_error( 'You\'re not owner of this contact.' );
+		}
 
 		wp_send_json_success( [] );
 	}
