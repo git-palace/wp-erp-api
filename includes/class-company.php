@@ -55,7 +55,7 @@ class Company_API_Handler {
 		wp_send_json_success( [] );		
 	}
 
-	// /wp-erp-api/contact/:id for updating 1 contact
+	// /wp-erp-api/company/:id for updating 1 contact
 	// keys : first_name,last_name,company,email,phone,life_stage,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
 	function post_company( $request ) {
 		$user = check_authentication();
@@ -75,5 +75,24 @@ class Company_API_Handler {
 		}
 
 		wp_send_json_success( 'Updated successfully.' );
+	}
+
+	// add companies
+	function add_companies( $request ) {
+		$user = check_authentication();
+
+		$companies = json_decode( $request->get_body(), true );
+
+		foreach ( $companies as $company ) {
+			$company['contact_owner'] = $user->ID;
+			$company['type'] = 'company';
+			$people_id = erp_insert_people( $company );
+
+			if ( is_wp_error( $people_id ) ) {
+				wp_send_json_error( 'Non company with the id = ' . $request['id'] );
+			}
+		}
+
+		wp_send_json_success( 'Added successfully.' );
 	}
 }
