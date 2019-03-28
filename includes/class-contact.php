@@ -60,7 +60,7 @@ class Contact_API_Handler {
 	function post_contact( $request ) {
 		$user = check_authentication();
 
-		$contact = $_POST;
+		$contact = json_decode( $request->get_body(), true );
 
 		$contact['contact_owner'] = $user->ID;
 		$contact['id'] = $request['id'];

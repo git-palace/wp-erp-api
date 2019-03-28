@@ -54,4 +54,26 @@ class Company_API_Handler {
 
 		wp_send_json_success( [] );		
 	}
+
+	// /wp-erp-api/contact/:id for updating 1 contact
+	// keys : first_name,last_name,company,email,phone,life_stage,date_of_birth,contact_age,mobile,website,fax,street_1,street_2,city,country,state,postal_code,source,other,notes,facebook,twitter,googleplus,linkedin,user_id,
+	function post_company( $request ) {
+		$user = check_authentication();
+
+		$company = json_decode( $request->get_body(), true );
+
+		$company['contact_owner'] = $user->ID;
+		$company['id'] = $request['id'];
+		$company['type'] = 'company';
+
+		error_log( print_r( $company, true ) );
+
+		$people_id = erp_insert_people( $company );
+
+		if ( is_wp_error( $people_id ) ) {
+			wp_send_json_error( 'Non company with the id = ' . $request['id'] );
+		}
+
+		wp_send_json_success( 'Updated successfully.' );
+	}
 }
