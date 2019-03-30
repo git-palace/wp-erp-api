@@ -48,7 +48,7 @@ class Circle_API_Handler {
 		wp_send_json_success( erp_crm_get_subscriber_contact( $args, 'subscribe' ) );
 	}
 
-	// update circle: group_name, group_description, group_private, group_owner
+	// update circle: name, description, private
 	function post_circle( $request ) {
 		$user = check_authentication();
 
@@ -59,14 +59,30 @@ class Circle_API_Handler {
 
 		$data = [
             'id'          => $request['id'],
-            'name'        => $circle['group_name'],
-            'description' => $circle['group_description'],
-            'private'     => erp_validate_boolean( $circle['group_private'] ) ? 1 : null,
+            'name'        => $circle['name'],
+            'description' => $circle['description'],
+            'private'     => erp_validate_boolean( $circle['private'] ) ? 1 : null,
             'created_by'  => $user->ID
         ];
 
         erp_crm_save_contact_group( $data );
 
         wp_send_json_success( 'Contact group save successfully' );
+	}
+
+	// add circles: array of  name, description, private
+	function add_circles( $request ) {
+		$user = check_authentication();
+
+		$circles = json_decode( $request->get_body(), true );
+
+		foreach ( $circles as $circle ) {
+			$circle['created_by'] = $user->ID;
+			$circle['private'] = erp_validate_boolean( $circle['private'] ) ? 1 : null;
+			
+        	erp_crm_save_contact_group( $circle );
+		}
+
+		wp_send_json_success( 'Added successfully.' );
 	}
 }
