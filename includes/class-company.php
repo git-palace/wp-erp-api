@@ -2,7 +2,7 @@
 class Company_API_Handler {
 	private static $instance = null;
 
-	public static function get_instance() {
+	static function get_instance() {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new Company_API_Handler();
 		}
@@ -14,7 +14,7 @@ class Company_API_Handler {
 		add_action( 'rest_api_init', [$this, 'api_route_register'] );
 	}
 
-	public function api_route_register() {
+	function api_route_register() {
 		register_rest_route( 'wp-erp-api', 'company(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
 			'callback' 	=> [ $this, 'get_company' ]
@@ -33,7 +33,7 @@ class Company_API_Handler {
 
 	// /wp-erp-api/company/:id for 1 company
 	// /wp-erp-api/company for all companies
-	public function get_company( $request ) {
+	function get_company( $request ) {
 		$user = check_authentication();
 
 		if ( empty( $request['id'] ) ) {
