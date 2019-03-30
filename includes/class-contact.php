@@ -37,7 +37,7 @@ class Contact_API_Handler {
 		$user = check_authentication();
 
 		if ( empty( $request['id'] ) ) {
-		    $args = $_GET;
+		    $args = $_REQUEST;
 		    $args['type'] = 'contact';
 
 			wp_send_json_success( erp_get_peoples( $args ) );
