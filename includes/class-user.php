@@ -42,6 +42,11 @@ class User_API_Handler {
 		$user = check_authentication();
 
 		if ( !current_user_can( 'administrator' ) ) {
+	        $owner_id = get_user_meta( get_current_user_id(), 'created_by', true );
+
+	        if ( !user_can( $owner_id, 'administrator' ) )
+	        	wp_send_json_success( [] );
+
 			wp_send_json_success( ( new WeDevs\ERP\HRM\Employee( get_current_user_id() ) )->to_Array() );
 		}
 
@@ -105,7 +110,7 @@ class User_API_Handler {
 			$is_staff_or_team_user = get_user_meta( $employee->user_id, 'is_staff_or_team_user', true );
 	        $owner_id = get_user_meta( $employee->user_id, 'created_by', true );
 
-			if ( $is_staff_or_team_user == "on" ) {
+			if ( $is_staff_or_team_user == "on" && $owner_id == get_current_user_id() ) {
 				array_push( $employee_list, ( new WeDevs\ERP\HRM\Employee( $employee->user_id ) )->to_Array() );
 			}
 		}
@@ -115,12 +120,83 @@ class User_API_Handler {
 
 	// get agent
 	function get_agent( $request ) {
-		$user = check_authentication();		
+		$user = check_authentication();
+
+		if ( !current_user_can( 'administrator') && current_user_can( 'erp_crm_agent' ) ) {
+			$is_staff_or_team_user = get_user_meta( get_current_user_id(), 'is_staff_or_team_user', true );
+
+			if ( $is_staff_or_team_user == "off" )
+				wp_send_json_success( ( new WeDevs\ERP\HRM\Employee( get_current_user_id() ) )->to_Array() );
+
+			wp_send_json_success( [] );
+		}
+
+		if ( isset( $request['id'] ) || !empty( $request['id'] ) ) {
+			$employee    = new WeDevs\ERP\HRM\Employee( $request['id'] );
+
+			if ( ! $employee->is_employee() )
+	            wp_send_json_error( 'Agent does not exists.' );
+	        
+	        $is_staff_or_team_user = get_user_meta( $request['id'], 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $request['id'], 'created_by', true );
+
+	        if ( $is_staff_or_team_user == "off" && $owner_id == get_current_user_id() )
+				wp_send_json_success( $employee->to_Array() );
+			else
+				wp_send_json_error( 'Agent does not exists or you\'re not allowed to access this user.' );
+		}
+
+	    $args = $_REQUEST;
+
+		$employees = erp_hr_get_employees( $args );
+		$employee_list = array();
+
+		foreach ( $employees as $idx => $employee ) {
+			$is_staff_or_team_user = get_user_meta( $employee->user_id, 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $employee->user_id, 'created_by', true );
+
+			if ( $is_staff_or_team_user == "off" && $owner_id == get_current_user_id() ) {
+				array_push( $employee_list, ( new WeDevs\ERP\HRM\Employee( $employee->user_id ) )->to_Array() );
+			}
+		}
+
+		wp_send_json_success( $employee_list );
 	}
 
 	// get team
 	function get_team( $request ) {
 		$user = check_authentication();
+
+		if ( isset( $request['id'] ) || !empty( $request['id'] ) ) {
+			$employee    = new WeDevs\ERP\HRM\Employee( $request['id'] );
+
+			if ( ! $employee->is_employee() )
+	            wp_send_json_error( 'Agent does not exists.' );
+	        
+	        $is_staff_or_team_user = get_user_meta( $request['id'], 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $request['id'], 'created_by', true );
+
+	        if ( $is_staff_or_team_user == "on" && $owner_id == get_current_user_id() )
+				wp_send_json_success( $employee->to_Array() );
+			else
+				wp_send_json_error( 'Agent does not exists or you\'re not allowed to access this user.' );
+		}
+
+	    $args = $_REQUEST;
+
+		$employees = erp_hr_get_employees( $args );
+		$employee_list = array();
+
+		foreach ( $employees as $idx => $employee ) {
+			$is_staff_or_team_user = get_user_meta( $employee->user_id, 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $employee->user_id, 'created_by', true );
+
+			if ( $is_staff_or_team_user == "on" && $owner_id == get_current_user_id() ) {
+				array_push( $employee_list, ( new WeDevs\ERP\HRM\Employee( $employee->user_id ) )->to_Array() );
+			}
+		}
+
+		wp_send_json_success( $employee_list );
 	}
 }
 ?>
