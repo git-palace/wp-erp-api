@@ -41,6 +41,16 @@ class User_API_Handler {
 			'callback' 	=> [ $this, 'get_agent' ]
 		] );
 
+		register_rest_route( 'wp-erp-api', 'agent/(?P<id>\d+)', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'post_agent' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'add-agents', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'add_agents' ]
+		] );
+
 		register_rest_route( 'wp-erp-api', 'team(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
 			'callback' 	=> [ $this, 'get_team' ]
@@ -221,6 +231,56 @@ class User_API_Handler {
 		}
 
 		wp_send_json_success( $employee_list );
+	}
+
+	function post_agent( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_hr_manager' ) || current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$agent = new WeDevs\ERP\HRM\Employee( $request['id'] );
+		$posted = json_decode( $request->get_body(), true );
+
+		$result = $agent->create_employee( $posted );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+        if ( !$agent->is_employee() ) {
+            wp_send_json_error( 'Could not create employee. Please try again.' );
+        }
+
+        wp_send_json_success( $agent->to_Array() );
+	}
+
+	function add_agents( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_hr_manager' ) || current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$agents = json_decode( $request->get_body(), true );
+
+		foreach ( $agents as $posted ) {
+			$posted['is_staff_or_team_user'] = "off";
+			
+			$agent = new WeDevs\ERP\HRM\Employee();
+			$result = $agent->create_employee( $posted );
+
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( $result->get_error_message() );
+			}
+
+	        if ( !$agent->is_employee() ) {
+	            wp_send_json_error( 'Could not create employee. Please try again.' );
+	        }
+		}
+
+		wp_send_json_success( 'Added successfully.' );
 	}
 
 	// get team
