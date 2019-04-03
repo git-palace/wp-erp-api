@@ -55,6 +55,16 @@ class User_API_Handler {
 			'methods' 	=> 'GET',
 			'callback' 	=> [ $this, 'get_team' ]
 		] );
+
+		register_rest_route( 'wp-erp-api', 'team/(?P<id>\d+)', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'post_team' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'add-teams', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'add_teams' ]
+		] );
 	}
 
 	// get broker
@@ -317,6 +327,56 @@ class User_API_Handler {
 		}
 
 		wp_send_json_success( $employee_list );
+	}
+
+	function post_team( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$team = new WeDevs\ERP\HRM\Employee( $request['id'] );
+		$posted = json_decode( $request->get_body(), true );
+
+		$result = $team->create_employee( $posted );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+        if ( !$team->is_employee() ) {
+            wp_send_json_error( 'Could not create employee. Please try again.' );
+        }
+
+        wp_send_json_success( $team->to_Array() );
+	}
+
+	function add_teams( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_hr_manager' ) || current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$teams = json_decode( $request->get_body(), true );
+
+		foreach ( $teams as $posted ) {
+			$posted['is_staff_or_team_user'] = "on";
+			
+			$team = new WeDevs\ERP\HRM\Employee();
+			$result = $team->create_employee( $posted );
+
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( $result->get_error_message() );
+			}
+
+	        if ( !$team->is_employee() ) {
+	            wp_send_json_error( 'Could not create employee. Please try again.' );
+	        }
+		}
+
+		wp_send_json_success( 'Added successfully.' );
 	}
 }
 ?>
