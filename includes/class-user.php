@@ -80,6 +80,37 @@ class User_API_Handler {
 	// get staff
 	function get_staff( $request ) {
 		$user = check_authentication();
+
+		if ( isset( $request['id'] ) || !empty( $request['id'] ) ) {
+			$employee    = new WeDevs\ERP\HRM\Employee( $request['id'] );
+
+			if ( ! $employee->is_employee() )
+	            wp_send_json_error( 'Staff does not exists.' );
+	        
+	        $is_staff_or_team_user = get_user_meta( $request['id'], 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $request['id'], 'created_by', true );
+
+	        if ( $is_staff_or_team_user == "on" && $owner_id == get_current_user_id() )
+				wp_send_json_success( $employee->to_Array() );
+			else
+				wp_send_json_error( 'Staff does not exists or you\'re not allowed to access this user.' );
+		}
+
+	    $args = $_REQUEST;
+
+		$employees = erp_hr_get_employees( $args );
+		$employee_list = array();
+
+		foreach ( $employees as $idx => $employee ) {
+			$is_staff_or_team_user = get_user_meta( $employee->user_id, 'is_staff_or_team_user', true );
+	        $owner_id = get_user_meta( $employee->user_id, 'created_by', true );
+
+			if ( $is_staff_or_team_user == "on" ) {
+				array_push( $employee_list, ( new WeDevs\ERP\HRM\Employee( $employee->user_id ) )->to_Array() );
+			}
+		}
+
+		wp_send_json_success( $employee_list );
 	}
 
 	// get agent
