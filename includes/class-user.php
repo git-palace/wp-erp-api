@@ -21,14 +21,24 @@ class User_API_Handler {
 			'callback' 	=> [ $this, 'get_broker' ]
 		] );
 
-		register_rest_route( 'wp-erp-api', 'agent(?:/(?P<id>\d+))?', [
-			'methods' 	=> 'GET',
-			'callback' 	=> [ $this, 'get_agent' ]
-		] );
-
 		register_rest_route( 'wp-erp-api', 'staff(?:/(?P<id>\d+))?', [
 			'methods' 	=> 'GET',
 			'callback' 	=> [ $this, 'get_staff' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'staff/(?P<id>\d+)', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'post_staff' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'add-staffs', [
+			'methods'	=> 'POST',
+			'callback'	=> [ $this, 'add_staffs' ]
+		] );
+
+		register_rest_route( 'wp-erp-api', 'agent(?:/(?P<id>\d+))?', [
+			'methods' 	=> 'GET',
+			'callback' 	=> [ $this, 'get_agent' ]
 		] );
 
 		register_rest_route( 'wp-erp-api', 'team(?:/(?P<id>\d+))?', [
@@ -116,6 +126,56 @@ class User_API_Handler {
 		}
 
 		wp_send_json_success( $employee_list );
+	}
+
+	function post_staff( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_hr_manager' ) || current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$staff = new WeDevs\ERP\HRM\Employee( $request['id'] );
+		$posted = json_decode( $request->get_body(), true );
+
+		$result = $staff->create_employee( $posted );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+        if ( !$staff->is_employee() ) {
+            wp_send_json_error( 'Could not create employee. Please try again.' );
+        }
+
+        wp_send_json_success( $staff->to_Array() );
+	}
+
+	function add_staffs( $request ) {
+		$user = check_authentication();
+
+		if ( !current_user_can( 'erp_hr_manager' ) || current_user_can( 'erp_crm_agent' ) ) {
+			wp_send_json_error( 'You\'re not allowed this action.' );
+		}
+
+		$staffs = json_decode( $request->get_body(), true );
+
+		foreach ( $staffs as $posted ) {
+			$posted['is_staff_or_team_user'] = "on";
+			
+			$staff = new WeDevs\ERP\HRM\Employee();
+			$result = $staff->create_employee( $posted );
+
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( $result->get_error_message() );
+			}
+
+	        if ( !$staff->is_employee() ) {
+	            wp_send_json_error( 'Could not create employee. Please try again.' );
+	        }
+		}
+
+		wp_send_json_success( 'Added successfully.' );
 	}
 
 	// get agent
