@@ -38,11 +38,11 @@ function check_authentication() {
 	$headers = apache_request_headers();
     
     if ( !isset( $headers['Authorization'] ) || empty( $headers['Authorization'] ) )
-    	wp_send_json_error( "Authentication is required." );
+        wp_send_json_error( "Authentication is required." );
 
-    $basic_auth = base64_decode( str_replace( 'Basic ', '', $headers['Authorization'] ) );
+    $basic_auth = base64_decode( str_replace( 'Bearer ', '', $headers['Authorization'] ) );
 
-    $basic_auth = explode( ':', $basic_auth );
+    /* $basic_auth = explode( ':', $basic_auth );
 
     if ( count( $basic_auth ) != 2)
     	wp_send_json_error( 'Authorization is invalid.' );
@@ -50,10 +50,13 @@ function check_authentication() {
     $user = wp_signon( [
     	'user_login'	=> $basic_auth[0],
     	'user_password'	=> $basic_auth[1]
-    ] );
+    ] ); */
+    
+    $user = get_user_by( 'email', $basic_auth );
 
-    if ( is_wp_error( $user ) )
-    	wp_send_json_error( 'Authorization is invalid' );
+    if ( is_wp_error( $user ) || !$user ) {
+        wp_send_json_error( 'Authorization is invalid' );    
+    }
 
     wp_set_current_user( $user->ID );
 

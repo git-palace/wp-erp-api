@@ -37,7 +37,7 @@ class Circle_API_Handler {
 	function get_circle( $request ) {
 		$user = check_authentication();
 
-	    $args = $_REQUEST;
+		$args = $_REQUEST;
 
 		if ( empty( $request['id'] ) ) {
 			wp_send_json_success( erp_crm_get_contact_groups( $args ) );
@@ -45,7 +45,18 @@ class Circle_API_Handler {
 
 		// get subscribers
 		$args['group_id'] = $request['id'];
-		wp_send_json_success( erp_crm_get_subscriber_contact( $args, 'subscribe' ) );
+		$subscriber_list = erp_crm_get_subscriber_contact( $args, 'subscribe' );
+		
+		if ( !isset( $_REQUEST['details'] ) || empty( $_REQUEST['details'] ) ) {
+			wp_send_json_success( $subscriber_list );
+		}
+
+		$result = [];
+		foreach ( $subscriber_list as $subscriber ) {
+			array_push( $result, new \WeDevs\ERP\CRM\Contact( $subscriber->user_id ) );			
+		}
+
+		wp_send_json_success( $result );
 	}
 
 	// update circle: name, description, private
